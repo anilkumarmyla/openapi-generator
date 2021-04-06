@@ -35,11 +35,11 @@ public class ScalaHttp4sServerCodegen extends DefaultCodegen implements CodegenC
         super();
 
         outputFolder = "generated-code" + File.separator + "scala-http4s";
-        modelTemplateFiles.put("model.mustache", ".zz");
-        apiTemplateFiles.put("api.mustache", ".zz");
+        modelTemplateFiles.put("model.mustache", ".scala");
+        apiTemplateFiles.put("api.mustache", ".scala");
         embeddedTemplateDir = templateDir = "scala-http4s-server";
-        apiPackage = "Apis";
-        modelPackage = "Models";
+        apiPackage = "org.openapitools.server.api";
+        modelPackage = "org.openapitools.server.model";
         supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
         // TODO: Fill this out.
     }
