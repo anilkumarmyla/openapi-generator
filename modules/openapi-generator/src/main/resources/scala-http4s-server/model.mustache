@@ -1,0 +1,27 @@
+package {{package}}
+
+import io.circe.generic.AutoDerivation
+
+{{#models}}
+{{#model}}
+/**
+{{#title}} * = {{{title}}} =
+ *
+{{/title}}
+{{#description}} * {{{description}}}
+ *
+{{/description}}
+{{#vars}}
+ * @param {{{name}}} {{#description}}{{{description}}}{{/description}}{{#example}} for example: ''{{{example}}}''{{/example}}
+{{/vars}}
+*/
+final case class {{classname}}(
+  {{#vars}}
+  {{{name}}}: {{^required}}Option[{{/required}}{{datatype}}{{^required}}]{{/required}}{{^-last}},{{/-last}}
+  {{/vars}}
+)
+
+object {{classname}} extends AutoDerivation
+
+{{/model}}
+{{/models}}
