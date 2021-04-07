@@ -1,6 +1,9 @@
 package {{package}}
 
 import io.circe.generic.AutoDerivation
+{{#imports}}
+import {{import}}
+{{/imports}}
 
 {{#models}}
 {{#model}}
