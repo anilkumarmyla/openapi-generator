@@ -44,6 +44,10 @@ public class ScalaHttp4sServerCodegen extends AbstractScalaCodegen implements Co
         supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
         supportingFiles.add(new SupportingFile("project/build.properties.mustache", "project", "build.properties"));
         supportingFiles.add(new SupportingFile("build.sbt.mustache", "", "build.sbt"));
+        supportingFiles.add(new SupportingFile("Main.scala.mustache",
+                (sourceFolder + File.separator + invokerPackage).replace(".", File.separator), "Main.scala"));
+        supportingFiles.add(new SupportingFile("Http4sServer.scala.mustache",
+                (sourceFolder + File.separator + invokerPackage).replace(".", File.separator), "Http4sServer.scala"));
 
         cliOptions.add(CliOption.newString(CodegenConstants.ARTIFACT_ID, CodegenConstants.ARTIFACT_ID).defaultValue(artifactId));
         cliOptions.add(CliOption.newString(CodegenConstants.ARTIFACT_VERSION, CodegenConstants.ARTIFACT_VERSION_DESC).defaultValue(artifactVersion));
