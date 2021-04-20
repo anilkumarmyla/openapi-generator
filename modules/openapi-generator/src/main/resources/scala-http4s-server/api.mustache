@@ -1,10 +1,21 @@
 package {{package}}
 
+import cats.effect.Sync
+import org.http4s.HttpRoutes
+import org.http4s.dsl._
 {{#imports}}import {{import}}
 {{/imports}}
 
 {{#operations}}
-class {{classname}}()
-{{#operation}}
-{{/operation}}
+object {{classname}} {
+  def routes[F[_] : Sync]: HttpRoutes[F] = {
+    val dsl = new Http4sDsl[F] {}
+    import dsl._
+    HttpRoutes.of[F] {
+    {{#operation}}
+      case req @ {{httpMethod}} -> Root / {{#vendorExtensions.x-paths}}{{#isText}}"{{/isText}}{{value}}{{#isText}}"{{/isText}}{{^-last}} / {{/-last}}{{/vendorExtensions.x-paths}} => Ok("Not implemented")
+    {{/operation}}
+    }
+  }
+}
 {{/operations}}

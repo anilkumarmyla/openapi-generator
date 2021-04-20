@@ -1,10 +1,17 @@
 package org.openapitools.codegen.languages;
 
+import com.google.common.collect.ImmutableMap;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.servers.Server;
 import org.openapitools.codegen.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class ScalaHttp4sServerCodegen extends AbstractScalaCodegen implements CodegenConfig {
     protected String artifactId;
@@ -48,6 +55,8 @@ public class ScalaHttp4sServerCodegen extends AbstractScalaCodegen implements Co
                 (sourceFolder + File.separator + invokerPackage).replace(".", File.separator), "Main.scala"));
         supportingFiles.add(new SupportingFile("Http4sServer.scala.mustache",
                 (sourceFolder + File.separator + invokerPackage).replace(".", File.separator), "Http4sServer.scala"));
+        supportingFiles.add(new SupportingFile("StatusRoutes.scala.mustache",
+                (sourceFolder + File.separator + invokerPackage).replace(".", File.separator), "StatusRoutes.scala"));
 
         cliOptions.add(CliOption.newString(CodegenConstants.ARTIFACT_ID, CodegenConstants.ARTIFACT_ID).defaultValue(artifactId));
         cliOptions.add(CliOption.newString(CodegenConstants.ARTIFACT_VERSION, CodegenConstants.ARTIFACT_VERSION_DESC).defaultValue(artifactVersion));
@@ -82,5 +91,61 @@ public class ScalaHttp4sServerCodegen extends AbstractScalaCodegen implements Co
         } else {
             additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, invokerPackage);
         }
+    }
+
+    private static final Map<String, String> pathTypeToMatcher = ImmutableMap.<String,String>builder()
+            .put("Int", "intNumber")
+            .put("Long", "longNumber")
+            .put("Float", "floatNumber")
+            .put("Double", "doubleNumber")
+            .put("Boolean", "boolean")
+            .put("String", "segment")
+            .build();
+
+    private static String pathMatcherPatternName(CodegenParameter parameter) {
+        return parameter.paramName + "Pattern";
+    }
+
+    @Override
+    public CodegenOperation fromOperation(String path, String httpMethod, Operation operation, List<Server> servers) {
+        CodegenOperation codegenOperation = super.fromOperation(path, httpMethod, operation, servers);
+        addPathMatcher(codegenOperation);
+        return codegenOperation;
+    }
+
+    protected static void addPathMatcher(CodegenOperation codegenOperation) {
+        LinkedList<String> allPaths = new LinkedList<>(Arrays.asList(codegenOperation.path.split("/")));
+        allPaths.removeIf(""::equals);
+
+        LinkedList<TextOrMatcher> pathMatchers = new LinkedList<>();
+        for (String path : allPaths) {
+            TextOrMatcher textOrMatcher = new TextOrMatcher("", true);
+            if (path.startsWith("{") && path.endsWith("}")) {
+                String parameterName = path.substring(1, path.length() - 1);
+                for (CodegenParameter pathParam : codegenOperation.pathParams) {
+                    if (pathParam.baseName.equals(parameterName)) {
+                        String matcher = pathTypeToMatcher.get(pathParam.dataType);
+                        if (matcher == null) {
+                            LOGGER.warn("The path parameter " + pathParam.baseName +
+                                    " with the datatype " + pathParam.dataType +
+                                    " could not be translated to a corresponding path matcher of akka http" +
+                                    " and therefore has been translated to string.");
+                            matcher = pathTypeToMatcher.get("String");
+                        }
+                        if (pathParam.pattern != null && !pathParam.pattern.isEmpty()) {
+                            matcher = pathMatcherPatternName(pathParam);
+                        }
+                        textOrMatcher.value = matcher;
+                        textOrMatcher.isText = false;
+                        pathMatchers.add(textOrMatcher);
+                    }
+                }
+            } else {
+                textOrMatcher.value = path;
+                textOrMatcher.isText = true;
+                pathMatchers.add(textOrMatcher);
+            }
+        }
+        codegenOperation.vendorExtensions.put("x-paths", pathMatchers);
     }
 }

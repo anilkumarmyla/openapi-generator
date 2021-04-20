@@ -6,6 +6,7 @@ import fs2.Stream
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
+import {{invokerPackage}}.api._
 
 import scala.concurrent.ExecutionContext.global
 
@@ -17,8 +18,9 @@ object Http4sServer {
     // want to extract a segments not checked
     // in the underlying routes.
     val httpApp = (
-      Http4sServerRoutes.helloWorldRoutes[F] <+>
-        Http4sServerRoutes.jokeRoutes[F]
+      {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}{{classname}}.routes[F] <+>
+        {{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
+        StatusRoutes.routes[F]
       ).orNotFound
 
     // With Middlewares in place
